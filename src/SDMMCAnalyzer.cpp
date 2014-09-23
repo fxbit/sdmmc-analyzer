@@ -45,14 +45,10 @@ void SDMMCAnalyzer::WorkerThread()
 			/* continue if parsing the command failed */
 			continue;
 		}
-
-		if (mSettings->mProtocol == PROTOCOL_MMC) {
-			struct MMCResponse response = SDMMCHelpers::MMCCommandResponse(cmdindex);
-			if (response.mType != MMC_RSP_NONE)
-				WaitForAndReadMMCResponse(response);
-		} else {
-			/* FIXME: implement SD response handling */
-		}
+		
+                struct MMCResponse response = SDMMCHelpers::MMCCommandResponse(cmdindex);
+                if (response.mType != MMC_RSP_NONE)
+                        WaitForAndReadMMCResponse(response);
 	}
 }
 
@@ -90,7 +86,7 @@ void SDMMCAnalyzer::AdvanceToNextClock()
 int SDMMCAnalyzer::TryReadCommand()
 {
 	int index;
-	
+        
 	/* check for start bit */
 	if (mCommand->GetBitState() != BIT_LOW)
 		return -1;
@@ -113,7 +109,7 @@ int SDMMCAnalyzer::TryReadCommand()
 		frame.mStartingSampleInclusive = mClock->GetSampleNumber();
 		frame.mData1 = 0;
 		frame.mData2 = 0;
-		frame.mType = SDMMCAnalyzerResults::FRAMETYPE_COMMAND;
+                frame.mType = SDMMCAnalyzerResults::FRAMETYPE_COMMAND;
 
 		for (int i = 0; i < 6; i++) {
 			frame.mData1 = (frame.mData1 << 1) | mCommand->GetBitState();
@@ -180,8 +176,11 @@ int SDMMCAnalyzer::WaitForAndReadMMCResponse(struct MMCResponse response)
 	AdvanceToNextClock();
 
 	/* skip 6 bits */
-	for (int i = 0; i < 6; i++)
+        if(response.mType != MMC_RSP_R5)
+        {
+            for (int i = 0; i < 6; i++)
 		AdvanceToNextClock();
+        }
 
 	/* response */
 	{
@@ -195,10 +194,20 @@ int SDMMCAnalyzer::WaitForAndReadMMCResponse(struct MMCResponse response)
 
 		int bits = response.mBits;
 
-		for (int i = 0; i < 64 && bits > 0; i++, bits--) {
-			frame.mData1 = (frame.mData1 << 1) | mCommand->GetBitState();
-			AdvanceToNextClock();
-		}
+                if(response.mType == MMC_RSP_R5)
+                {
+                    for (int i = 0; i < 6; i++) {
+                            frame.mData1 = (frame.mData1 << 1) | mCommand->GetBitState();
+                            AdvanceToNextClock();
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < 64 && bits > 0; i++, bits--) {
+                            frame.mData1 = (frame.mData1 << 1) | mCommand->GetBitState();
+                            AdvanceToNextClock();
+                    }
+                }
 
 		for (int i = 0; i < 64 && bits > 0; i++, bits--) {
 			frame.mData2 = (frame.mData2 << 1) | mCommand->GetBitState();

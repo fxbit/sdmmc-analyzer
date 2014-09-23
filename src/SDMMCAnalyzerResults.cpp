@@ -89,7 +89,7 @@ void SDMMCAnalyzerResults::GenerateBubbleText(U64 frame_index, Channel& channel,
 		else
 			AddResultString("Card sending");
 		break;
-
+        
 	case FRAMETYPE_COMMAND:
 	{
 		char str_cmd[4];
@@ -270,7 +270,74 @@ void SDMMCAnalyzerResults::GenerateBubbleText(U64 frame_index, Channel& channel,
 			AddResultString("R4");
 			break;
 		case MMC_RSP_R5:
-			AddResultString("R5");
+                        char str_cmd[4];
+                        char str_Staff[33];
+                        char str_RespoFlags[33];
+                        char str_Data[33];
+                        U8 flags;
+                        std::string res("R5");
+                        flags = (frame.mData2 & 0x0000FF00) >> 8;
+                        
+                        AnalyzerHelpers::GetNumberString((frame.mData1 & 0x000000FF), Decimal, 6, str_cmd, sizeof(str_cmd));
+                        AnalyzerHelpers::GetNumberString((frame.mData2 & 0xFFFF0000) >> 16, Hexadecimal, 16, str_Staff, sizeof(str_Staff));
+                        AnalyzerHelpers::GetNumberString(flags, Hexadecimal, 8, str_RespoFlags, sizeof(str_RespoFlags));
+                        AnalyzerHelpers::GetNumberString((frame.mData2 & 0x000000FF) >> 8, Hexadecimal, 8, str_Data, sizeof(str_Data));
+
+                        
+                        res += " (";
+                        res += str_cmd;
+                        res += "(";
+                        res += cmd_abbrev_from_number(frame.mData1);
+                        res += " ) ";
+                        res += " ) ";
+                        
+                        res += " Staff=";
+                        res += str_Staff;
+                        res += " ";
+                        
+                        
+                        res += " Flags=";
+                        res += str_RespoFlags;
+                        res += " [";
+                        
+                        if (flags & (1 << 7))
+                                        res += " CRC_ERR,";
+                        if (flags & (1 << 6))
+                                        res += " ILLEGAL_CMD,";
+                        
+                        if ( ((flags & (1 << 4)) != 0) && 
+                             ((flags & (1 << 5)) != 0) )
+                                        res += " RFU,";
+                        
+                        if ( ((flags & (1 << 4)) == 0) && 
+                             ((flags & (1 << 5)) != 0) )
+                                        res += " TRN,";
+                                        
+                        
+                        if ( ((flags & (1 << 4)) != 0) && 
+                             ((flags & (1 << 5)) == 0) )
+                                        res += " CMD,";
+                                        
+                        
+                        if ( ((flags & (1 << 4)) == 0) && 
+                             ((flags & (1 << 5)) == 0) )
+                                        res += " DIS,";
+                        
+                        if (flags & (1 << 3))
+                                        res += " ERROR,";
+                        if (flags & (1 << 2))
+                                        res += " Reserved (1),";
+                        if (flags & (1 << 1))
+                                        res += " Reserved (1),";
+                        if (flags & (1 << 0))
+                                        res += " OUT_OF_RANGE,";
+                        res += " ]";
+                        
+                        res += " Data=";
+                        res += str_Data;
+                        res += " ";
+                        
+                        AddResultString(res.c_str());
 			break;
 		}
 		break;

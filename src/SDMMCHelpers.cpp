@@ -53,8 +53,8 @@ static struct MMCResponse responses[64] = {
 	/* 49 */ {MMC_RSP_NONE,     0,   0, false}, /* reserved */
 	/* 50 */ {MMC_RSP_NONE,     0,   0, false}, /* reserved */
 	/* 51 */ {MMC_RSP_NONE,     0,   0, false}, /* reserved */
-	/* 52 */ {MMC_RSP_NONE,     0,   0, false}, /* reserved */
-	/* 53 */ {MMC_RSP_NONE,     0,   0, false}, /* reserved */
+	/* 52 */ {MMC_RSP_R5,      32,  64, false}, /* reserved */
+	/* 53 */ {MMC_RSP_R5,      32,  64, false}, /* reserved */
 	/* 54 */ {MMC_RSP_NONE,     0,   0, false}, /* reserved */
 	/* 55 */ {MMC_RSP_R1,      32,  64, false},
 	/* 56 */ {MMC_RSP_R1,      32,  64, false},
