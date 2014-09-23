@@ -12,7 +12,7 @@ Prior to compiling the SDK zip file should be unpacked into the directory contai
 
     +-rootdir/
       +-SaleaeAnalyzerSdk-1.1.9/
-      +-sdmmc-analyzer/
+          +-sdmmc-analyzer/
 
 ### Mac OS X
 
