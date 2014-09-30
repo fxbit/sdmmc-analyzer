@@ -94,14 +94,72 @@ void SDMMCAnalyzerResults::GenerateBubbleText(U64 frame_index, Channel& channel,
 	{
 		char str_cmd[4];
 		char str_arg[33];
+                char str_dummy[33];
 
 		AnalyzerHelpers::GetNumberString(frame.mData1, Decimal, 6, str_cmd, sizeof(str_cmd));
 		AnalyzerHelpers::GetNumberString(frame.mData2, display_base, 32, str_arg, sizeof(str_arg));
 
-		AddResultString("CMD");
-		AddResultString("CMD", str_cmd);
-		AddResultString("CMD", str_cmd, ", arg=", str_arg);
-		AddResultString("CMD", str_cmd, " (", cmd_abbrev_from_number(frame.mData1), "), arg=", str_arg);
+                
+                /* Parse the SDIO CMDs */
+                switch(frame.mData1)
+                {
+                    case 53:
+                    {
+                        std::string res("CMD52: ");
+                        
+                        AnalyzerHelpers::GetNumberString(frame.mData2, Hexadecimal, 32, str_arg, sizeof(str_arg));
+                        res += " arg=";
+                        res += str_arg;
+                        res += ", ";
+                        
+                        /* R/W flag */
+                        if(frame.mData2 & (1<<32))
+                            res += "W ,";
+                        else
+                            res += "R ,";
+                            
+                        res += "Func=";
+                        
+                        AnalyzerHelpers::GetNumberString(((frame.mData2 & 0x70000000)>>28)&0x07, Decimal, 3, str_dummy, sizeof(str_dummy));
+                        res += str_dummy;
+                        res += ", ";
+                        
+                        
+                        if(frame.mData2 & 0x08000000)
+                            res += "BMode, ";
+                            
+                        
+                        if(frame.mData2 & 0x04000000)
+                            res += "OP1, ";
+                        else
+                            res += "OP0, ";
+                        
+                        
+                        res += "Addr=";
+                        AnalyzerHelpers::GetNumberString(((frame.mData2 & 0x03FFFE00)>>9)&0x1FFFF, Hexadecimal, 17, str_dummy, sizeof(str_dummy));
+                        res += str_dummy;
+                        res += ", ";
+                        
+                        res += "Count=";
+                        AnalyzerHelpers::GetNumberString(frame.mData2 & 0x01FF, Decimal, 9, str_dummy, sizeof(str_dummy));
+                        res += str_dummy;
+                        
+                        AddResultString(res.c_str());
+                    }
+                        break;
+                    
+                    case 52:
+                            
+                    default:
+                        
+                        AddResultString("CMD");
+                        AddResultString("CMD", str_cmd);
+                        AddResultString("CMD", str_cmd, ", arg=", str_arg);
+                        AddResultString("CMD", str_cmd, " (", cmd_abbrev_from_number(frame.mData1), "), arg=", str_arg);
+                        
+                        break;
+                }
+                
 		break;
 	}
 
